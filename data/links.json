@@ -1,0 +1,4 @@
+[
+  {"code":"A001","business":"Placa de prueba","destination":"https://example.com/","active":true},
+  {"code":"A002","business":"Placa pausada","destination":"https://example.com/","active":false}
+]
