@@ -57,10 +57,10 @@ export default function RecoveryForm({ changePassword }) {
       <p>Guárdala como “Acceso a Tappia” en tu gestor de contraseñas.</p>
       <a href="/admin">Ir al inicio de sesión</a>
     </> : valid ? <>
-      <p>Elige una contraseña nueva de entre 12 y 128 caracteres.</p>
+      <p>Elige una contraseña nueva de entre 8 y 25 caracteres.</p>
       <form onSubmit={submit} style={{ display: 'grid', gap: 18 }}>
-        <label>Nueva contraseña<input name="password" type="password" required minLength={12} maxLength={128} autoComplete="new-password" style={inputStyle} /></label>
-        <label>Repite la contraseña<input name="confirmation" type="password" required minLength={12} maxLength={128} autoComplete="new-password" style={inputStyle} /></label>
+        <label>Nueva contraseña<input name="password" type="password" required minLength={8} maxLength={25} autoComplete="new-password" style={inputStyle} /></label>
+        <label>Repite la contraseña<input name="confirmation" type="password" required minLength={8} maxLength={25} autoComplete="new-password" style={inputStyle} /></label>
         <button disabled={busy} style={{ background: '#214a35', color: 'white', padding: 14, border: 0, borderRadius: 8, fontSize: 16 }}>{busy ? 'Guardando…' : 'Guardar nueva contraseña'}</button>
       </form>
     </> : <><p>Abre el enlace del correo de recuperación para elegir tu nueva contraseña. Si recargaste esta pantalla, solicita un enlace nuevo.</p><a href="/admin">Volver al inicio de sesión</a></>}
