@@ -101,7 +101,7 @@ async function createAccess(form) {
     const businessId = text(form, 'business_id');
     const email = text(form, 'email').toLowerCase();
     const password = String(form.get('password') || '');
-    if (!uuid(businessId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 12 || password.length > 128) throw new Error();
+    if (!uuid(businessId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 8 || password.length > 25) throw new Error();
     const [business] = await data(`/rest/v1/businesses?id=eq.${businessId}&select=id,owner_id`, null, {}, true);
     if (!business || business.owner_id) throw new Error();
     let user;
@@ -275,7 +275,7 @@ export default async function Admin({ searchParams }) {
       </form></section>{report}
       {admin && <div id="management"><h2 style={heading}>Administrar Tappia</h2>
         <section style={box}><h3 style={heading}>Crear negocio</h3><form action={createBusiness} style={grid}><input type="hidden" name="id" value={randomUUID()} /><label>Nombre del negocio<input style={input} name="name" required maxLength={120} placeholder="Saudade" /></label><button style={button}>Crear negocio</button></form></section>
-        {businesses.map(b => <section style={box} key={b.id}><h3 style={heading}>{b.name}</h3>{b.owner_id ? <p>Acceso habilitado.</p> : <><p>Crea su acceso con una contraseña de entre 12 y 128 caracteres. Compártela con el responsable por un medio privado. Si reintentas un alta incompleta, se conserva la contraseña del primer intento.</p><form action={createAccess} style={grid}><input name="business_id" type="hidden" value={b.id} /><label>Correo<input name="email" type="email" required maxLength={254} style={input} autoComplete="off" /></label><label>Contraseña inicial<input name="password" type="password" required minLength={12} maxLength={128} style={input} autoComplete="new-password" /></label><button style={button}>Crear acceso</button></form></>}</section>)}
+        {businesses.map(b => <section style={box} key={b.id}><h3 style={heading}>{b.name}</h3>{b.owner_id ? <p>Acceso habilitado.</p> : <><p>Crea su acceso con una contraseña de entre 8 y 25 caracteres. Compártela con el responsable por un medio privado. Si reintentas un alta incompleta, se conserva la contraseña del primer intento.</p><form action={createAccess} style={grid}><input name="business_id" type="hidden" value={b.id} /><label>Correo<input name="email" type="email" required maxLength={254} style={input} autoComplete="off" /></label><label>Contraseña inicial<input name="password" type="password" required minLength={8} maxLength={25} style={input} autoComplete="new-password" /></label><button style={button}>Crear acceso</button></form></>}</section>)}
         {!!businesses.length && <section style={box}><h3 style={heading}>Agregar placa</h3><PlateForm businesses={businesses} /></section>}
         {links.map(link => <section style={box} key={link.code}><h3 style={heading}>Editar {link.code}</h3>{!link.business_id && <p>Sin negocio asignado. Al asignarla, ese negocio podrá ver también sus visitas anteriores.</p>}<PlateForm businesses={businesses} link={link} /></section>)}
       </div>}
