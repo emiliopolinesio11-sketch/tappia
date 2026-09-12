@@ -27,7 +27,7 @@ async function changePassword(form) {
       cache: 'no-store', redirect: 'error',
     };
     const check = await fetch(url, { ...options, signal: AbortSignal.timeout(10000) });
-    if (!check.ok || (await check.json()).id !== admin) throw new Error();
+    if (!check.ok || !(await check.json()).id) throw new Error();
     const update = await fetch(url, {
       ...options, method: 'PUT', body: JSON.stringify({ password }), signal: AbortSignal.timeout(10000),
     });

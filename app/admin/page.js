@@ -66,8 +66,9 @@ async function login(form) {
   } catch { redirect('/admin?error=login'); }
   (await cookies()).set(COOKIE, session.access_token, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/admin',
-    maxAge: Math.max(1, Math.min(Number(session.expires_in) || 3600, 3600)),
+    maxAge: 60 * 60 * 24 * 30,
   });
+  if (session.refresh_token) (await cookies()).set('tappia_refresh', session.refresh_token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/admin', maxAge: 60 * 60 * 24 * 30 });
   redirect('/admin');
 }
 async function logout() {
@@ -75,6 +76,7 @@ async function logout() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) { try { await api('/auth/v1/logout?scope=local', token, { method: 'POST' }); } catch {} }
+  jar.set('tappia_refresh', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/admin', maxAge: 0 });
   jar.set(COOKIE, '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/admin', maxAge: 0 });
   redirect('/admin');
 }
@@ -234,7 +236,7 @@ export default async function Admin({ searchParams }) {
       <label>Correo<input style={input} name="email" type="email" autoComplete="username" maxLength={254} required /></label>
       <label>Contraseña<input style={input} name="password" type="password" autoComplete="current-password" maxLength={1024} required /></label>
       <button style={button}>Entrar</button>
-    </form><p>La sesión dura hasta una hora.</p>
+    </form><p><a href="/admin/forgot-password">Olvidé mi contraseña</a></p>
   </div>;
   const { token, admin } = session;
   let content;
@@ -259,8 +261,8 @@ export default async function Admin({ searchParams }) {
       const { periods, plates } = summarize(filtered, from, to, group);
       report = <>
         <div style={grid}>{[['Aperturas en el periodo', filtered.length], ['Placas', filteredLinks.length]].map(([label, value]) => <section key={label} style={box}><p>{label}</p><strong style={{ fontSize: 32 }}>{value.toLocaleString('es-MX')}</strong></section>)}</div>
-        <section style={box}><h2 style={heading}>Visitas por placa</h2><div style={{ overflowX: 'auto' }}><table style={{ width: '100%' }}><thead><tr>{['Placa', 'Negocio', 'Estado', 'Visitas', 'Última del periodo'].map(s => <th style={cell} key={s}>{s}</th>)}</tr></thead>
-          <tbody>{filteredLinks.map(l => <tr key={l.code}><td style={cell}>{l.code}</td><td style={cell}>{businesses.find(b => b.id === l.business_id)?.name || l.business}</td><td style={cell}>{l.active ? 'Activa' : 'Pausada'}</td><td style={cell}>{plates.get(l.code)?.count || 0}</td><td style={cell}>{dateLabel(plates.get(l.code)?.last)}</td></tr>)}</tbody></table></div>{!filteredLinks.length && <p>Todavía no hay placas asignadas.</p>}</section>
+        <section style={box}><h2 style={heading}>Visitas por placa</h2><div style={{ overflowX: 'auto' }}><table style={{ width: '100%' }}><thead><tr>{['Placa', 'Negocio', 'Estado', 'Visitas', 'Última del periodo', 'QR'].map(s => <th style={cell} key={s}>{s}</th>)}</tr></thead>
+          <tbody>{filteredLinks.map(l => <tr key={l.code}><td style={cell}>{l.code}</td><td style={cell}>{businesses.find(b => b.id === l.business_id)?.name || l.business}</td><td style={cell}>{l.active ? 'Activa' : 'Pausada'}</td><td style={cell}>{plates.get(l.code)?.count || 0}</td><td style={cell}>{dateLabel(plates.get(l.code)?.last)}</td><td style={cell}><a href={`/admin/qr/${l.code}`} download>Descargar QR</a></td></tr>)}</tbody></table></div>{!filteredLinks.length && <p>Todavía no hay placas asignadas.</p>}</section>
         <section style={box}><h2 style={heading}>Historial de aperturas</h2><p>{from} a {to} · Hora de Ciudad de México.</p>{group === 'week' && <p>Semanas desde el lunes. Las semanas que cruzan el intervalo cuentan solo los días seleccionados.</p>}
           <div style={{ maxHeight: 440, overflowY: 'auto' }}><table style={{ width: '100%' }}><thead><tr><th style={cell}>Periodo</th><th style={cell}>Aperturas</th></tr></thead><tbody>{[...periods].reverse().map(([period, count]) => <tr key={period}><td style={cell}>{group === 'week' ? `Semana del ${period}` : period}</td><td style={cell}>{count.toLocaleString('es-MX')}</td></tr>)}</tbody></table></div>
         </section><p>Son aperturas registradas, no personas únicas. Incluyen pruebas y pueden incluir bots. QR y NFC se cuentan juntos si usan el mismo enlace.</p>
@@ -281,7 +283,7 @@ export default async function Admin({ searchParams }) {
       </div>}
     </>;
   } catch { content = <section style={box}><h2 style={heading}>No pudimos cargar el panel</h2><p>Revisa la conexión y que la configuración de negocios esté aplicada.</p><a href="/admin">Reintentar</a></section>; }
-  return <div style={{ maxWidth: 1100, margin: 'auto', padding: '28px 20px' }}><header style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 28 }}><div><a href="/" style={{ color: '#214a35', fontWeight: 'bold', fontSize: 28 }}>tappia</a><h1 style={{ fontSize: 32, letterSpacing: -1 }}>{admin ? 'Panel de administrador' : 'Mi negocio'}</h1><p>{session.user.email}</p></div><div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>{admin && <a href="#management">Administrar</a>}<form action={logout}><button style={button}>Cerrar sesión</button></form></div></header>{content}</div>;
+  return <div style={{ maxWidth: 1100, margin: 'auto', padding: '28px 20px' }}><header style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 28 }}><div><a className="brand" href="/" style={{ color: '#214a35', fontWeight: 'bold', fontSize: 28 }}>tappia</a><h1 style={{ fontSize: 32, letterSpacing: -1 }}>{admin ? 'Panel de administrador' : 'Mi negocio'}</h1><p>{session.user.email}</p></div><div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>{admin && <a href="#management">Administrar</a>}<form action={logout}><button style={button}>Cerrar sesión</button></form></div></header>{content}</div>;
 }
 function PlateForm({ businesses, link }) {
   return <form action={savePlate} style={grid}>
