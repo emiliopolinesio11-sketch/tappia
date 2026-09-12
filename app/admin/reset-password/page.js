@@ -13,8 +13,8 @@ async function changePassword(form) {
   const password = String(form.get('password') || '');
   const confirmation = String(form.get('confirmation') || '');
   if (!token || token.length > 16000) return { error: 'Abre un enlace de recuperación nuevo.' };
-  if (password.length < 12 || password.length > 128 || password !== confirmation) {
-    return { error: 'Usa entre 12 y 128 caracteres y repite la misma contraseña.' };
+  if (password.length < 8 || password.length > 25 || password !== confirmation) {
+    return { error: 'Usa entre 8 y 25 caracteres y repite la misma contraseña.' };
   }
   try {
     const base = process.env.SUPABASE_URL;
