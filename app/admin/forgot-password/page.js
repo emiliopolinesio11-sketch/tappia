@@ -7,7 +7,7 @@ async function recover(form) {
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254) {
     try {
       const url = new URL('/auth/v1/recover', process.env.SUPABASE_URL);
-      url.searchParams.set('redirect_to', 'https://tappia-taupe.vercel.app/admin/reset-password');
+      url.searchParams.set('redirect_to', 'https://mytappia.com/admin/reset-password');
       const result = await fetch(url, { method: 'POST', headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email }), cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
       success = result.ok;
     } catch {}
