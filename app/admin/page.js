@@ -1,3 +1,4 @@
+import ActivityChart from './ActivityChart';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { randomUUID } from 'node:crypto';
@@ -261,8 +262,9 @@ export default async function Admin({ searchParams }) {
       const { periods, plates } = summarize(filtered, from, to, group);
       report = <>
         <div style={grid}>{[['Aperturas en el periodo', filtered.length], ['Placas', filteredLinks.length]].map(([label, value]) => <section key={label} style={box}><p>{label}</p><strong style={{ fontSize: 32 }}>{value.toLocaleString('es-MX')}</strong></section>)}</div>
+        <section style={box}><ActivityChart key={`${from}-${to}-${group}-${selected}`} periods={[...periods]} group={group} /></section>
         <section style={box}><h2 style={heading}>Visitas por placa</h2><div style={{ overflowX: 'auto' }}><table style={{ width: '100%' }}><thead><tr>{['Placa', 'Negocio', 'Estado', 'Visitas', 'Última del periodo', 'QR'].map(s => <th style={cell} key={s}>{s}</th>)}</tr></thead>
-          <tbody>{filteredLinks.map(l => <tr key={l.code}><td style={cell}>{l.code}</td><td style={cell}>{businesses.find(b => b.id === l.business_id)?.name || l.business}</td><td style={cell}>{l.active ? 'Activa' : 'Pausada'}</td><td style={cell}>{plates.get(l.code)?.count || 0}</td><td style={cell}>{dateLabel(plates.get(l.code)?.last)}</td><td style={cell}><a href={`/admin/qr/${l.code}`} download>Descargar QR</a></td></tr>)}</tbody></table></div>{!filteredLinks.length && <p>Todavía no hay placas asignadas.</p>}</section>
+          <tbody>{filteredLinks.map(l => <tr key={l.code}><td style={cell}>{l.code}<br /><a style={{ fontSize: 13 }} href={`https://mytappia.com/r/${l.code}`} target="_blank" rel="noopener noreferrer">Enlace NFC ↗</a></td><td style={cell}>{businesses.find(b => b.id === l.business_id)?.name || l.business}</td><td style={cell}>{l.active ? 'Activa' : 'Pausada'}</td><td style={cell}>{plates.get(l.code)?.count || 0}</td><td style={cell}>{dateLabel(plates.get(l.code)?.last)}</td><td style={cell}><a href={`/admin/qr/${l.code}`} download>Descargar QR</a></td></tr>)}</tbody></table></div>{!filteredLinks.length && <p>Todavía no hay placas asignadas.</p>}</section>
         <section style={box}><h2 style={heading}>Historial de aperturas</h2><p>{from} a {to} · Hora de Ciudad de México.</p>{group === 'week' && <p>Semanas desde el lunes. Las semanas que cruzan el intervalo cuentan solo los días seleccionados.</p>}
           <div style={{ maxHeight: 440, overflowY: 'auto' }}><table style={{ width: '100%' }}><thead><tr><th style={cell}>Periodo</th><th style={cell}>Aperturas</th></tr></thead><tbody>{[...periods].reverse().map(([period, count]) => <tr key={period}><td style={cell}>{group === 'week' ? `Semana del ${period}` : period}</td><td style={cell}>{count.toLocaleString('es-MX')}</td></tr>)}</tbody></table></div>
         </section><p>Son aperturas registradas, no personas únicas. Incluyen pruebas y pueden incluir bots. QR y NFC se cuentan juntos si usan el mismo enlace.</p>
