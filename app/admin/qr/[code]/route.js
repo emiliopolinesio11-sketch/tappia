@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
     const plates = await result.json();
     if (!Array.isArray(plates) || plates[0]?.code !== code) return fail('Placa no encontrada.', 404);
     // Always encode the permanent production address, never a preview hostname or destination.
-    const url = `https://tappia-taupe.vercel.app/r/${code}`;
+    const url = `https://mytappia.com/r/${code}`;
     const png = await QRCode.toBuffer(url, { type: 'png', errorCorrectionLevel: 'M', margin: 4, scale: 24, color: { dark: '#000000', light: '#ffffff' } });
     return new Response(new Uint8Array(png), { headers: { ...headers, 'Content-Type': 'image/png', 'Content-Disposition': `attachment; filename="Tappia-${code}.png"` } });
   } catch { return fail('No pudimos generar el QR. Inténtalo de nuevo.', 503); }
